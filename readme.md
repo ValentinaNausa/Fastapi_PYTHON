@@ -1,1 +1,1 @@
-se creeo el readme y se enlaso con git 
+fastapi ademas que se agrego requeremientos.txt

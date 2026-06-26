@@ -1,0 +1,1 @@
+se creeo el readme y se enlaso con git 

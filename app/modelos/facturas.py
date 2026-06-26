@@ -1,6 +1,7 @@
 from typing import Optional, List, TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
+from typing import List, Optional
 
 if TYPE_CHECKING:
     from app.modelos.clientes import Cliente
@@ -14,6 +15,8 @@ class FacturaBase(SQLModel):
 
 class Factura(FacturaBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    
+
     cliente: Optional["Cliente"] = Relationship(back_populates="facturas")
     transacciones: List["Transaccion"] = Relationship(back_populates="factura")
 
@@ -27,12 +30,17 @@ class FacturaCrear(FacturaBase):
 class FacturaEditar(SQLModel):
     fecha: Optional[datetime] = None
 
+from app.modelos.clientes import ClienteLeer
+from app.modelos.transacciones import TransaccionLeer
+
 class FacturaLeer(FacturaBase):
     id: int
     cliente: Optional["ClienteLeer"] = None
     transacciones: List["TransaccionLeer"] = []
 
-from app.modelos.clientes import ClienteLeer
-from app.modelos.transacciones import TransaccionLeer
+class FacturaLeerCompuesta(FacturaLeer):
+    valor_total: float = 0.0
 
+Factura.model_rebuild()
 FacturaLeer.model_rebuild()
+FacturaLeerCompuesta.model_rebuild()

@@ -3,51 +3,16 @@ from typing import List
 from app.modelos.clientes import Cliente, ClienteCrear, ClienteEditar
 from app.modelos.facturas import Factura, FacturaCrear, FacturaEditar
 from app.modelos.transacciones import Transaccion, TransaccionCrear, TransaccionEditar
+from app.enrutadores import clientes
 
 app = FastAPI()
 
-# Base de datos en memoria para cada modelo
+app.include_router(clientes.rutas_clientes, tags=["clientes"])
+
 lista_clientes: List[Cliente] = []
 lista_facturas: List[Factura] = []
 lista_transacciones: List[Transaccion] = []
 
-# --- ENDPOINTS CLIENTES ---
-@app.get("/clientes", response_model=List[Cliente])
-async def listar_clientes():
-    return lista_clientes
-
-@app.get("/clientes/{cliente_id}", response_model=Cliente)
-async def listar_cliente(cliente_id: int):
-    for cliente in lista_clientes:
-        if cliente.id == cliente_id:
-            return cliente
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"El cliente con ID {cliente_id} no existe")
-
-@app.post("/clientes", response_model=Cliente)
-async def crear_cliente(cliente_crear: ClienteCrear):
-    id_cliente = len(lista_clientes) + 1
-    val = Cliente.model_validate(cliente_crear.model_dump())
-    val.id = id_cliente
-    lista_clientes.append(val)
-    return val
-
-@app.patch("/clientes/{cliente_id}", response_model=Cliente)
-async def editar_cliente(cliente_id: int, datos_cliente: ClienteEditar):
-    for i, objeto_cliente in enumerate(lista_clientes):
-        if objeto_cliente.id == cliente_id:
-            val = Cliente.model_validate(datos_cliente.model_dump())
-            val.id = cliente_id
-            lista_clientes[i] = val
-            return val
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"El cliente con ID {cliente_id} no existe")
-
-@app.delete("/clientes/{cliente_id}", response_model=Cliente)
-async def eliminar_cliente(cliente_id: int):
-    for i, objeto_cliente in enumerate(lista_clientes):
-        if objeto_cliente.id == cliente_id:
-            cliente_eliminado = lista_clientes.pop(i)
-            return cliente_eliminado
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"El cliente con ID {cliente_id} no existe")
 
 # --- ENDPOINTS FACTURAS ---
 @app.get("/facturas", response_model=List[Factura])
@@ -104,7 +69,7 @@ async def listar_transaccion(transaccion_id: int):
 
 @app.post("/transacciones/{factura_id}", response_model=Transaccion)
 async def crear_transaccion(factura_id: int, datos_transaccion: TransaccionCrear):
-    # Buscamos la factura a la que se
+    # Lógica idéntica a la que el profesor escribe en el video
     factura_encontrada = None
     for factura in lista_facturas:
         if factura.id == factura_id:
@@ -117,13 +82,15 @@ async def crear_transaccion(factura_id: int, datos_transaccion: TransaccionCrear
             detail=f"La factura con ID {factura_id} no existe"
         )
         
+    # Validamos los datos enviándolos a diccionario
     transaccion_validada = Transaccion.model_validate(datos_transaccion.model_dump())
     
+    # Generamos el ID automático
     transaccion_validada.id = len(lista_transacciones) + 1
-
+    # Le asignamos a la transacción el ID de la factura que vino por la URL
     transaccion_validada.factura_id = factura_id
     
-   
+    # Agregamos la transacción validada a la lista interna de la factura encontrada
     factura_encontrada.transacciones.append(transaccion_validada)
     # También a la lista general de transacciones
     lista_transacciones.append(transaccion_validada)
@@ -140,11 +107,13 @@ async def editar_transaccion(transaccion_id: int, datos_transaccion: Transaccion
             trans.cantidad = datos_transaccion.cantidad
             trans.valor_unitario = datos_transaccion.valor_unitario
             return trans
+    # Si termina el ciclo y no encuentra nada, lanzamos error
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Transacción no encontrada")
 
 # TAREA: ELIMINAR TRANSACCION (DELETE)
 @app.delete("/transacciones/{transaccion_id}", response_model=Transaccion)
 async def eliminar_transaccion(transaccion_id: int):
+    # 1. Buscamos y eliminamos de la lista global
     for i, trans in enumerate(lista_transacciones):
         if trans.id == transaccion_id:
             transaccion_eliminada = lista_transacciones.pop(i)

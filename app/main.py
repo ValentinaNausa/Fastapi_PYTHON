@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI
 from app.enrutadores import clientes, facturas, transacciones
 from app.database import create_db_and_tables  

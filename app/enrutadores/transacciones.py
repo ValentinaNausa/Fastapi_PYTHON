@@ -1,27 +1,24 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 from sqlmodel import Session, select
-from app.modelos.transacciones import Transaccion, TransaccionCrear, TransaccionEditar
+from app.modelos.transacciones import Transaccion, TransaccionCrear, TransaccionEditar, TransaccionLeer
 from app.modelos.facturas import Factura
 from app.database import get_session
 
 rutas_transacciones = APIRouter()
 
-# --- ENDPOINTS TRANSACCIONES ---
 
-@rutas_transacciones.get("/transacciones", response_model=List[Transaccion])
+@rutas_transacciones.get("/transacciones", response_model=List[TransaccionLeer])
 def listar_transacciones(session: Session = Depends(get_session)):
     transacciones = session.exec(select(Transaccion)).all()
     return transacciones
 
 @rutas_transacciones.post("/transacciones/{factura_id}", response_model=Transaccion)
 def crear_transaccion(factura_id: int, datos_transaccion: TransaccionCrear, session: Session = Depends(get_session)):
-    # 1. Verificamos que la factura exista
     factura = session.get(Factura, factura_id)
     if not factura:
         raise HTTPException(status_code=404, detail="Factura no encontrada")
     
-    # 2. Creamos la transacción vinculada a la factura
     nueva_transaccion = Transaccion.model_validate(datos_transaccion.model_dump())
     nueva_transaccion.factura_id = factura_id
     

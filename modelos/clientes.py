@@ -1,12 +1,16 @@
 from pydantic import BaseModel
 
 class ClienteBase(BaseModel):
+    id: int | None = None
     nombre: str
-    edad: int
-    descripcion: str | None = None
+    email: str
+    descripcion: str
+
+class Cliente(ClienteBase):
+    id: int | None = None
 
 class ClienteCrear(ClienteBase):
     pass
 
-class Cliente(ClienteBase):
-    id: int | None = None
+class ClienteEditar(ClienteBase):
+    pass
